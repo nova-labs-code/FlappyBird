@@ -262,7 +262,7 @@ body {
 
     <div id="score">0</div>
 
-    <img id="bird" src="assets/bird.png" alt="Bird">
+    <img id="bird" src="./assets/bird.png" alt="Bird">
 
     <div id="pipes"></div>
 
@@ -440,11 +440,11 @@ function createPipe(x) {
     const gapBottom = gapTop + GAME.pipeGap;
 
     const topPipe = document.createElement("img");
-    topPipe.src = "assets/pipe.png";
+    topPipe.src = "./assets/pipe.png";
     topPipe.className = "pipe top";
 
     const bottomPipe = document.createElement("img");
-    bottomPipe.src = "assets/pipe.png";
+    bottomPipe.src = "./assets/pipe.png";
     bottomPipe.className = "pipe bottom";
 
     topPipe.style.left = `${x}px`;
