@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+>
+
+<title>Flappy Bird</title>
+
+<style>
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+
+html,
+body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+    background: #70c5ce;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#game {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    max-width: 500px;
+    overflow: hidden;
+    background:
+        linear-gradient(
+            to bottom,
+            #70c5ce 0%,
+            #70c5ce 82%,
+            #ded895 82%,
+            #ded895 87%,
+            #9ad44b 87%,
+            #9ad44b 100%
+        );
+}
+
+/* Clouds */
+
+.cloud {
+    position: absolute;
+    background: rgba(255,255,255,0.75);
+    border-radius: 50px;
+    filter: blur(1px);
+}
+
+.cloud::before,
+.cloud::after {
+    content: "";
+    position: absolute;
+    background: inherit;
+    border-radius: 50%;
+}
+
+.cloud::before {
+    width: 55%;
+    height: 140%;
+    left: 15%;
+    bottom: 0;
+}
+
+.cloud::after {
+    width: 45%;
+    height: 120%;
+    right: 10%;
+    bottom: 0;
+}
+
+.cloud1 {
+    width: 110px;
+    height: 30px;
+    top: 12%;
+    left: 10%;
+}
+
+.cloud2 {
+    width: 140px;
+    height: 35px;
+    top: 25%;
+    right: -20px;
+}
+
+.cloud3 {
+    width: 90px;
+    height: 25px;
+    top: 42%;
+    left: -20px;
+}
+
+/* Bird */
+
+#bird {
+    position: absolute;
+    width: 46px;
+    height: 46px;
+    object-fit: contain;
+    left: 24%;
+    top: 45%;
+    z-index: 20;
+    transform-origin: center;
+    pointer-events: none;
+}
+
+/* Pipes */
+
+.pipe {
+    position: absolute;
+    width: 72px;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.pipe.top {
+    transform: rotate(180deg);
+}
+
+.pipe.bottom {
+    transform: none;
+}
+
+/* Score */
+
+#score {
+    position: absolute;
+    top: 25px;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    z-index: 50;
+
+    font-size: 52px;
+    font-weight: 900;
+    color: white;
+
+    text-shadow:
+        3px 3px 0 #555,
+        -2px -2px 0 #555,
+        2px -2px 0 #555,
+        -2px 2px 0 #555;
+
+    pointer-events: none;
+}
+
+/* Start / game over */
+
+#overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 100;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    background: rgba(0,0,0,0.18);
+}
+
+#title {
+    margin: 0 0 10px;
+
+    font-size: 48px;
+    font-weight: 900;
+    color: white;
+
+    text-shadow:
+        4px 4px 0 #555,
+        -2px -2px 0 #555;
+}
+
+#message {
+    margin: 0 0 25px;
+
+    color: white;
+    font-size: 20px;
+    font-weight: bold;
+    text-align: center;
+
+    text-shadow: 2px 2px 0 #555;
+}
+
+#startButton {
+    border: 0;
+    border-radius: 12px;
+
+    padding: 15px 32px;
+
+    background: #f7d51d;
+    color: #5b4300;
+
+    font-size: 21px;
+    font-weight: 900;
+
+    box-shadow:
+        0 5px 0 #b49600,
+        0 8px 15px rgba(0,0,0,0.25);
+
+    cursor: pointer;
+}
+
+#startButton:active {
+    transform: translateY(4px);
+    box-shadow:
+        0 1px 0 #b49600,
+        0 4px 8px rgba(0,0,0,0.25);
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Ground */
+
+#ground {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+
+    width: 100%;
+    height: 13%;
+
+    background:
+        repeating-linear-gradient(
+            135deg,
+            #8ed13f 0px,
+            #8ed13f 12px,
+            #7bc536 12px,
+            #7bc536 24px
+        );
+
+    border-top: 5px solid #6eaa31;
+
+    z-index: 30;
+    pointer-events: none;
+}
+</style>
+</head>
+
+<body>
+
+<div id="game">
+
+    <div class="cloud cloud1"></div>
+    <div class="cloud cloud2"></div>
+    <div class="cloud cloud3"></div>
+
+    <div id="score">0</div>
+
+    <img id="bird" src="assets/bird.png" alt="Bird">
+
+    <div id="pipes"></div>
+
+    <div id="ground"></div>
+
+    <div id="overlay">
+        <h1 id="title">FLAPPY</h1>
+        <p id="message">
+            Tap, click, or press SPACE to flap
+        </p>
+        <button id="startButton">START</button>
+    </div>
+
+</div>
+
+<script>
+"use strict";
+
+/* =========================
+   GAME SETTINGS
+========================= */
+
+const GAME = {
+    gravity: 0.42,
+    flapStrength: -7.2,
+
+    birdSize: 46,
+
+    pipeWidth: 72,
+    pipeGap: 155,
+
+    pipeSpeed: 3.1,
+    pipeSpacing: 220,
+
+    groundHeight: 13
+};
+
+
+/* =========================
+   ELEMENTS
+========================= */
+
+const game = document.getElementById("game");
+const bird = document.getElementById("bird");
+const pipesContainer = document.getElementById("pipes");
+
+const scoreElement = document.getElementById("score");
+
+const overlay = document.getElementById("overlay");
+const title = document.getElementById("title");
+const message = document.getElementById("message");
+const startButton = document.getElementById("startButton");
+
+
+/* =========================
+   STATE
+========================= */
+
+let birdY = 0;
+let birdVelocity = 0;
+let birdRotation = 0;
+
+let pipes = [];
+
+let score = 0;
+let bestScore = Number(localStorage.getItem("flappyBest") || 0);
+
+let running = false;
+let gameStarted = false;
+
+let lastTime = 0;
+let animationFrame;
+
+
+/* =========================
+   GAME SIZE
+========================= */
+
+function getGameWidth() {
+    return game.clientWidth;
+}
+
+function getGameHeight() {
+    return game.clientHeight;
+}
+
+function getGroundY() {
+    return getGameHeight() * (1 - GAME.groundHeight / 100);
+}
+
+
+/* =========================
+   RESET
+========================= */
+
+function resetGame() {
+
+    cancelAnimationFrame(animationFrame);
+
+    pipesContainer.innerHTML = "";
+    pipes = [];
+
+    score = 0;
+    scoreElement.textContent = "0";
+
+    birdY = getGameHeight() * 0.45;
+    birdVelocity = 0;
+    birdRotation = 0;
+
+    bird.style.left = `${getGameWidth() * 0.24}px`;
+    bird.style.top = `${birdY}px`;
+    bird.style.transform = "rotate(0deg)";
+
+    running = false;
+    gameStarted = false;
+
+    lastTime = 0;
+}
+
+
+/* =========================
+   START
+========================= */
+
+function startGame() {
+
+    resetGame();
+
+    overlay.classList.add("hidden");
+
+    running = true;
+    gameStarted = true;
+
+    flap();
+
+    lastTime = performance.now();
+
+    animationFrame = requestAnimationFrame(gameLoop);
+}
+
+
+/* =========================
+   FLAP
+========================= */
+
+function flap() {
+
+    if (!running) {
+        return;
+    }
+
+    birdVelocity = GAME.flapStrength;
+}
+
+
+/* =========================
+   CREATE PIPE
+========================= */
+
+function createPipe(x) {
+
+    const gameHeight = getGameHeight();
+
+    const ceiling = 55;
+    const floor = getGroundY() - 55;
+
+    const minimumGapTop = ceiling;
+    const maximumGapTop = floor - GAME.pipeGap;
+
+    const gapTop =
+        minimumGapTop +
+        Math.random() *
+        Math.max(1, maximumGapTop - minimumGapTop);
+
+    const gapBottom = gapTop + GAME.pipeGap;
+
+    const topPipe = document.createElement("img");
+    topPipe.src = "assets/pipe.png";
+    topPipe.className = "pipe top";
+
+    const bottomPipe = document.createElement("img");
+    bottomPipe.src = "assets/pipe.png";
+    bottomPipe.className = "pipe bottom";
+
+    topPipe.style.left = `${x}px`;
+    topPipe.style.top = `${gapTop - 450}px`;
+
+    bottomPipe.style.left = `${x}px`;
+    bottomPipe.style.top = `${gapBottom}px`;
+
+    /*
+        The source pipe is 355x450.
+
+        We keep the image's aspect ratio while
+        displaying it at 72px wide.
+    */
+
+    const pipeHeight =
+        GAME.pipeWidth * (450 / 355);
+
+    topPipe.style.width = `${GAME.pipeWidth}px`;
+    topPipe.style.height = `${pipeHeight}px`;
+
+    bottomPipe.style.width = `${GAME.pipeWidth}px`;
+    bottomPipe.style.height = `${pipeHeight}px`;
+
+    pipesContainer.appendChild(topPipe);
+    pipesContainer.appendChild(bottomPipe);
+
+    pipes.push({
+        x,
+        gapTop,
+        gapBottom,
+        topElement: topPipe,
+        bottomElement: bottomPipe,
+        scored: false
+    });
+}
+
+
+/* =========================
+   INITIAL PIPE
+========================= */
+
+function createInitialPipes() {
+
+    const width = getGameWidth();
+
+    createPipe(width + 100);
+}
+
+
+/* =========================
+   UPDATE PIPES
+========================= */
+
+function updatePipes(delta) {
+
+    const speedMultiplier = delta / 16.67;
+
+    for (let i = pipes.length - 1; i >= 0; i--) {
+
+        const pipe = pipes[i];
+
+        pipe.x -= GAME.pipeSpeed * speedMultiplier;
+
+        pipe.topElement.style.left = `${pipe.x}px`;
+        pipe.bottomElement.style.left = `${pipe.x}px`;
+
+        if (
+            !pipe.scored &&
+            pipe.x + GAME.pipeWidth < getGameWidth() * 0.24
+        ) {
+            pipe.scored = true;
+
+            score++;
+
+            scoreElement.textContent = score;
+        }
+
+        if (pipe.x + GAME.pipeWidth < -20) {
+
+            pipe.topElement.remove();
+            pipe.bottomElement.remove();
+
+            pipes.splice(i, 1);
+        }
+    }
+
+    const lastPipe = pipes[pipes.length - 1];
+
+    if (
+        !lastPipe ||
+        lastPipe.x < getGameWidth() - GAME.pipeSpacing
+    ) {
+        createPipe(getGameWidth() + 30);
+    }
+}
+
+
+/* =========================
+   COLLISION
+========================= */
+
+function rectanglesOverlap(a, b) {
+
+    return (
+        a.left < b.right &&
+        a.right > b.left &&
+        a.top < b.bottom &&
+        a.bottom > b.top
+    );
+}
+
+
+function checkCollision() {
+
+    const birdLeft = getGameWidth() * 0.24;
+    const birdRight = birdLeft + GAME.birdSize;
+
+    const birdTop = birdY + 5;
+    const birdBottom = birdY + GAME.birdSize - 5;
+
+    const groundY = getGroundY();
+
+    /* Ground */
+
+    if (birdBottom >= groundY) {
+        return true;
+    }
+
+    /* Ceiling */
+
+    if (birdTop <= 0) {
+        return true;
+    }
+
+    /* Pipes */
+
+    for (const pipe of pipes) {
+
+        const pipeLeft = pipe.x;
+        const pipeRight = pipe.x + GAME.pipeWidth;
+
+        const topPipeBottom = pipe.gapTop;
+        const bottomPipeTop = pipe.gapBottom;
+
+        const horizontalOverlap =
+            birdRight > pipeLeft &&
+            birdLeft < pipeRight;
+
+        if (!horizontalOverlap) {
+            continue;
+        }
+
+        if (
+            birdTop < topPipeBottom ||
+            birdBottom > bottomPipeTop
+        ) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+/* =========================
+   GAME OVER
+========================= */
+
+function gameOver() {
+
+    running = false;
+
+    if (score > bestScore) {
+
+        bestScore = score;
+
+        localStorage.setItem(
+            "flappyBest",
+            String(bestScore)
+        );
+    }
+
+    title.textContent = "GAME OVER";
+
+    message.innerHTML =
+        `Score: ${score}<br>Best: ${bestScore}`;
+
+    startButton.textContent = "PLAY AGAIN";
+
+    overlay.classList.remove("hidden");
+
+    cancelAnimationFrame(animationFrame);
+}
+
+
+/* =========================
+   GAME LOOP
+========================= */
+
+function gameLoop(time) {
+
+    if (!running) {
+        return;
+    }
+
+    if (!lastTime) {
+        lastTime = time;
+    }
+
+    let delta = time - lastTime;
+
+    /*
+        Prevent huge physics jumps if the browser
+        pauses the tab or the phone locks.
+    */
+    delta = Math.min(delta, 35);
+
+    lastTime = time;
+
+    const multiplier = delta / 16.67;
+
+    /* Gravity */
+
+    birdVelocity += GAME.gravity * multiplier;
+
+    birdY += birdVelocity * multiplier;
+
+    /* Rotation */
+
+    birdRotation = Math.max(
+        -25,
+        Math.min(90, birdVelocity * 6)
+    );
+
+    bird.style.top = `${birdY}px`;
+
+    bird.style.transform =
+        `rotate(${birdRotation}deg)`;
+
+    /* Pipes */
+
+    updatePipes(delta);
+
+    /* Collision */
+
+    if (checkCollision()) {
+        gameOver();
+        return;
+    }
+
+    animationFrame =
+        requestAnimationFrame(gameLoop);
+}
+
+
+/* =========================
+   INPUT
+========================= */
+
+function handleInput(event) {
+
+    if (event) {
+        event.preventDefault();
+    }
+
+    if (!running) {
+
+        if (!gameStarted) {
+            startGame();
+        }
+
+        return;
+    }
+
+    flap();
+}
+
+
+/* =========================
+   BUTTON
+========================= */
+
+startButton.addEventListener("click", function(event) {
+
+    event.stopPropagation();
+
+    startGame();
+});
+
+
+/* =========================
+   TOUCH
+========================= */
+
+game.addEventListener(
+    "touchstart",
+    handleInput,
+    { passive: false }
+);
+
+
+/* =========================
+   MOUSE
+========================= */
+
+game.addEventListener(
+    "mousedown",
+    function(event) {
+
+        if (event.target === startButton) {
+            return;
+        }
+
+        handleInput(event);
+    }
+);
+
+
+/* =========================
+   KEYBOARD
+========================= */
+
+document.addEventListener(
+    "keydown",
+    function(event) {
+
+        if (
+            event.code === "Space" ||
+            event.code === "ArrowUp"
+        ) {
+
+            event.preventDefault();
+
+            handleInput(event);
+        }
+    }
+);
+
+
+/* =========================
+   RESIZE
+========================= */
+
+window.addEventListener(
+    "resize",
+    function() {
+
+        if (!running) {
+
+            birdY = getGameHeight() * 0.45;
+
+            bird.style.top =
+                `${birdY}px`;
+        }
+    }
+);
+
+
+/* =========================
+   INITIAL STATE
+========================= */
+
+resetGame();
+
+message.textContent =
+    "Tap, click, or press SPACE to flap";
+
+startButton.textContent = "START";
