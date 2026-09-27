@@ -24,7 +24,9 @@ body {
     width: 100%;
     height: 100%;
     overflow: hidden;
+
     font-family: Arial, sans-serif;
+
     background: #70c5ce;
 }
 
@@ -34,11 +36,19 @@ body {
     align-items: center;
 }
 
+
+/* =========================
+   GAME
+========================= */
+
 #game {
     position: relative;
+
     width: 100vw;
     height: 100vh;
+
     max-width: 500px;
+
     overflow: hidden;
 
     background:
@@ -53,26 +63,38 @@ body {
         );
 }
 
-/* CLOUDS */
+
+/* =========================
+   CLOUDS
+========================= */
 
 .cloud {
     position: absolute;
+
     background: rgba(255,255,255,0.75);
+
     border-radius: 50px;
+
     filter: blur(1px);
+
+    pointer-events: none;
 }
 
 .cloud::before,
 .cloud::after {
     content: "";
+
     position: absolute;
+
     background: inherit;
+
     border-radius: 50%;
 }
 
 .cloud::before {
     width: 55%;
     height: 140%;
+
     left: 15%;
     bottom: 0;
 }
@@ -80,6 +102,7 @@ body {
 .cloud::after {
     width: 45%;
     height: 120%;
+
     right: 10%;
     bottom: 0;
 }
@@ -87,6 +110,7 @@ body {
 .cloud1 {
     width: 110px;
     height: 30px;
+
     top: 12%;
     left: 10%;
 }
@@ -94,6 +118,7 @@ body {
 .cloud2 {
     width: 140px;
     height: 35px;
+
     top: 25%;
     right: -20px;
 }
@@ -101,11 +126,15 @@ body {
 .cloud3 {
     width: 90px;
     height: 25px;
+
     top: 42%;
     left: -20px;
 }
 
-/* BIRD */
+
+/* =========================
+   BIRD
+========================= */
 
 #bird {
     position: absolute;
@@ -125,7 +154,10 @@ body {
     pointer-events: none;
 }
 
-/* PIPES */
+
+/* =========================
+   PIPES
+========================= */
 
 .pipe {
     position: absolute;
@@ -136,6 +168,10 @@ body {
 
     pointer-events: none;
 
+    /*
+        Stretch the actual image so the
+        pipe reaches the edge of the screen.
+    */
     object-fit: fill;
 }
 
@@ -143,12 +179,19 @@ body {
     transform: rotate(180deg);
 }
 
-/* SCORE */
+.pipe.bottom {
+    transform: none;
+}
+
+
+/* =========================
+   SCORE
+========================= */
 
 #score {
     position: absolute;
 
-    top: 25px;
+    top: 70px;
     left: 0;
 
     width: 100%;
@@ -171,7 +214,10 @@ body {
     pointer-events: none;
 }
 
-/* OVERLAY */
+
+/* =========================
+   OVERLAY
+========================= */
 
 #overlay {
     position: absolute;
@@ -213,19 +259,23 @@ body {
 
     text-align: center;
 
-    text-shadow: 2px 2px 0 #555;
+    text-shadow:
+        2px 2px 0 #555;
 }
 
 #startButton {
     border: 0;
+
     border-radius: 12px;
 
     padding: 15px 32px;
 
     background: #f7d51d;
+
     color: #5b4300;
 
     font-size: 21px;
+
     font-weight: 900;
 
     box-shadow:
@@ -249,7 +299,10 @@ body {
     display: none !important;
 }
 
-/* GROUND */
+
+/* =========================
+   GROUND
+========================= */
 
 #ground {
     position: absolute;
@@ -278,15 +331,24 @@ body {
 </style>
 </head>
 
+
 <body>
 
 <div id="game">
+
+    <!-- CLOUDS -->
 
     <div class="cloud cloud1"></div>
     <div class="cloud cloud2"></div>
     <div class="cloud cloud3"></div>
 
+
+    <!-- SCORE -->
+
     <div id="score">0</div>
+
+
+    <!-- BIRD -->
 
     <img
         id="bird"
@@ -294,13 +356,24 @@ body {
         alt="Bird"
     >
 
+
+    <!-- PIPES -->
+
     <div id="pipes"></div>
+
+
+    <!-- GROUND -->
 
     <div id="ground"></div>
 
+
+    <!-- START / GAME OVER -->
+
     <div id="overlay">
 
-        <h1 id="title">FLAPPY</h1>
+        <h1 id="title">
+            FLAPPY
+        </h1>
 
         <p id="message">
             Tap, click, or press SPACE to flap
@@ -314,11 +387,13 @@ body {
 
 </div>
 
+
 <script>
 "use strict";
 
+
 /* =========================
-   SETTINGS
+   GAME SETTINGS
 ========================= */
 
 const GAME = {
@@ -371,7 +446,7 @@ const startButton =
 
 
 /* =========================
-   STATE
+   GAME STATE
 ========================= */
 
 let birdY = 0;
@@ -397,7 +472,7 @@ let lastTime = 0;
 
 
 /* =========================
-   SIZE
+   GAME SIZE
 ========================= */
 
 function getGameWidth() {
@@ -422,12 +497,14 @@ function getGroundY() {
 
 
 /* =========================
-   RESET
+   RESET GAME
 ========================= */
 
 function resetGame() {
 
-    cancelAnimationFrame(animationFrame);
+    cancelAnimationFrame(
+        animationFrame
+    );
 
     pipesContainer.innerHTML = "";
 
@@ -437,12 +514,14 @@ function resetGame() {
 
     scoreElement.textContent = "0";
 
+
     birdY =
         getGameHeight() * 0.45;
 
     birdVelocity = 0;
 
     birdRotation = 0;
+
 
     bird.style.left =
         `${getGameWidth() * 0.24}px`;
@@ -453,6 +532,7 @@ function resetGame() {
     bird.style.transform =
         "rotate(0deg)";
 
+
     running = false;
 
     lastTime = 0;
@@ -460,30 +540,42 @@ function resetGame() {
 
 
 /* =========================
-   START
+   START GAME
 ========================= */
 
 function startGame() {
 
     resetGame();
 
-    overlay.classList.add("hidden");
+    overlay.classList.add(
+        "hidden"
+    );
 
     running = true;
 
+
     /*
-       THIS WAS MISSING BEFORE.
-       The first pipe now gets created.
+        Create the first pipe.
     */
+
     createInitialPipes();
 
+
+    /*
+        Give the bird its first flap.
+    */
+
     flap();
+
 
     lastTime =
         performance.now();
 
+
     animationFrame =
-        requestAnimationFrame(gameLoop);
+        requestAnimationFrame(
+            gameLoop
+        );
 }
 
 
@@ -508,16 +600,24 @@ function flap() {
 
 function createPipe(x) {
 
-    const ceiling = 55;
+    const ceiling = 0;
 
     const floor =
-        getGroundY() - 55;
+        getGroundY();
 
-    const minimumGapTop =
-        ceiling;
+
+    /*
+        Keep the gap away from
+        the score and ground.
+    */
+
+    const minimumGapTop = 100;
 
     const maximumGapTop =
-        floor - GAME.pipeGap;
+        floor -
+        GAME.pipeGap -
+        70;
+
 
     const gapTop =
         minimumGapTop +
@@ -528,11 +628,15 @@ function createPipe(x) {
             minimumGapTop
         );
 
+
     const gapBottom =
-        gapTop + GAME.pipeGap;
+        gapTop +
+        GAME.pipeGap;
 
 
-    /* TOP PIPE */
+    /*
+        TOP PIPE
+    */
 
     const topPipe =
         document.createElement("img");
@@ -544,7 +648,22 @@ function createPipe(x) {
         "pipe top";
 
 
-    /* BOTTOM PIPE */
+    topPipe.style.left =
+        `${x}px`;
+
+    topPipe.style.top =
+        `${ceiling}px`;
+
+    topPipe.style.width =
+        `${GAME.pipeWidth}px`;
+
+    topPipe.style.height =
+        `${gapTop}px`;
+
+
+    /*
+        BOTTOM PIPE
+    */
 
     const bottomPipe =
         document.createElement("img");
@@ -556,51 +675,22 @@ function createPipe(x) {
         "pipe bottom";
 
 
-    /*
-       Original pipe:
-       355 × 450
+    bottomPipe.style.left =
+        `${x}px`;
 
-       Display width:
-       72px
-
-       Matching proportional height:
-    */
-
-    const pipeHeight =
-        GAME.pipeWidth *
-        (450 / 355);
-
-
-    topPipe.style.width =
-        `${GAME.pipeWidth}px`;
-
-    topPipe.style.height =
-        `${pipeHeight}px`;
+    bottomPipe.style.top =
+        `${gapBottom}px`;
 
     bottomPipe.style.width =
         `${GAME.pipeWidth}px`;
 
     bottomPipe.style.height =
-        `${pipeHeight}px`;
-
-
-    topPipe.style.left =
-        `${x}px`;
-
-    bottomPipe.style.left =
-        `${x}px`;
+        `${floor - gapBottom}px`;
 
 
     /*
-       Position pipes around the gap.
+        Add pipes to page.
     */
-
-    topPipe.style.top =
-        `${gapTop - pipeHeight}px`;
-
-    bottomPipe.style.top =
-        `${gapBottom}px`;
-
 
     pipesContainer.appendChild(
         topPipe
@@ -610,6 +700,10 @@ function createPipe(x) {
         bottomPipe
     );
 
+
+    /*
+        Store pipe information.
+    */
 
     pipes.push({
 
@@ -660,6 +754,10 @@ function updatePipes(delta) {
             pipes[i];
 
 
+        /*
+            Move pipe.
+        */
+
         pipe.x -=
             GAME.pipeSpeed *
             multiplier;
@@ -672,12 +770,16 @@ function updatePipes(delta) {
             `${pipe.x}px`;
 
 
-        /* SCORE */
+        /*
+            Score.
+        */
 
         if (
             !pipe.scored &&
+
             pipe.x +
             GAME.pipeWidth <
+
             getGameWidth() * 0.24
         ) {
 
@@ -690,12 +792,13 @@ function updatePipes(delta) {
         }
 
 
-        /* REMOVE */
+        /*
+            Remove old pipe.
+        */
 
         if (
             pipe.x +
-            GAME.pipeWidth <
-            -20
+            GAME.pipeWidth < -20
         ) {
 
             pipe.topElement.remove();
@@ -707,7 +810,9 @@ function updatePipes(delta) {
     }
 
 
-    /* CREATE NEXT PIPE */
+    /*
+        Create next pipe.
+    */
 
     const lastPipe =
         pipes[pipes.length - 1];
@@ -715,6 +820,7 @@ function updatePipes(delta) {
 
     if (
         !lastPipe ||
+
         lastPipe.x <
         getGameWidth() -
         GAME.pipeSpacing
@@ -740,6 +846,7 @@ function checkCollision() {
         birdLeft +
         GAME.birdSize;
 
+
     const birdTop =
         birdY + 5;
 
@@ -753,7 +860,9 @@ function checkCollision() {
         getGroundY();
 
 
-    /* GROUND */
+    /*
+        Ground.
+    */
 
     if (
         birdBottom >= groundY
@@ -763,7 +872,9 @@ function checkCollision() {
     }
 
 
-    /* CEILING */
+    /*
+        Ceiling.
+    */
 
     if (
         birdTop <= 0
@@ -773,7 +884,9 @@ function checkCollision() {
     }
 
 
-    /* PIPES */
+    /*
+        Pipes.
+    */
 
     for (
         const pipe of pipes
@@ -787,12 +900,12 @@ function checkCollision() {
             GAME.pipeWidth;
 
 
-        const horizontal =
+        const horizontalOverlap =
             birdRight > pipeLeft &&
             birdLeft < pipeRight;
 
 
-        if (!horizontal) {
+        if (!horizontalOverlap) {
             continue;
         }
 
@@ -880,6 +993,11 @@ function gameLoop(time) {
         time - lastTime;
 
 
+    /*
+        Prevent huge jumps if the
+        browser pauses.
+    */
+
     delta =
         Math.min(
             delta,
@@ -894,7 +1012,9 @@ function gameLoop(time) {
         delta / 16.67;
 
 
-    /* GRAVITY */
+    /*
+        GRAVITY
+    */
 
     birdVelocity +=
         GAME.gravity *
@@ -906,11 +1026,14 @@ function gameLoop(time) {
         multiplier;
 
 
-    /* ROTATION */
+    /*
+        ROTATION
+    */
 
     birdRotation =
         Math.max(
             -25,
+
             Math.min(
                 90,
                 birdVelocity * 6
@@ -926,12 +1049,16 @@ function gameLoop(time) {
         `rotate(${birdRotation}deg)`;
 
 
-    /* PIPES */
+    /*
+        PIPES
+    */
 
     updatePipes(delta);
 
 
-    /* COLLISION */
+    /*
+        COLLISION
+    */
 
     if (
         checkCollision()
@@ -962,8 +1089,8 @@ function handleInput(event) {
 
 
     /*
-       If the game hasn't started,
-       start it.
+        If game isn't running,
+        start it.
     */
 
     if (!running) {
@@ -984,6 +1111,7 @@ function handleInput(event) {
 
 startButton.addEventListener(
     "pointerdown",
+
     function(event) {
 
         event.preventDefault();
@@ -996,16 +1124,16 @@ startButton.addEventListener(
 
 
 /* =========================
-   GAME TOUCH / MOUSE
+   GAME INPUT
 ========================= */
 
 game.addEventListener(
     "pointerdown",
+
     function(event) {
 
         /*
-           Don't let clicking the button
-           trigger another flap/start.
+            Ignore the start button.
         */
 
         if (
@@ -1027,10 +1155,12 @@ game.addEventListener(
 
 document.addEventListener(
     "keydown",
+
     function(event) {
 
         if (
             event.code === "Space" ||
+
             event.code === "ArrowUp"
         ) {
 
@@ -1048,6 +1178,7 @@ document.addEventListener(
 
 window.addEventListener(
     "resize",
+
     function() {
 
         if (!running) {
@@ -1055,6 +1186,7 @@ window.addEventListener(
             birdY =
                 getGameHeight() *
                 0.45;
+
 
             bird.style.top =
                 `${birdY}px`;
@@ -1064,11 +1196,12 @@ window.addEventListener(
 
 
 /* =========================
-   IMAGE ERROR CHECK
+   IMAGE ERRORS
 ========================= */
 
 bird.addEventListener(
     "error",
+
     function() {
 
         console.error(
