@@ -15,6 +15,7 @@
     box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
     user-select: none;
+    touch-action: none;
 }
 
 html,
@@ -39,6 +40,7 @@ body {
     height: 100vh;
     max-width: 500px;
     overflow: hidden;
+
     background:
         linear-gradient(
             to bottom,
@@ -51,7 +53,7 @@ body {
         );
 }
 
-/* Clouds */
+/* CLOUDS */
 
 .cloud {
     position: absolute;
@@ -103,49 +105,61 @@ body {
     left: -20px;
 }
 
-/* Bird */
+/* BIRD */
 
 #bird {
     position: absolute;
+
     width: 46px;
     height: 46px;
+
     object-fit: contain;
+
     left: 24%;
     top: 45%;
+
     z-index: 20;
+
     transform-origin: center;
+
     pointer-events: none;
 }
 
-/* Pipes */
+/* PIPES */
 
 .pipe {
     position: absolute;
+
     width: 72px;
+
     z-index: 10;
+
     pointer-events: none;
+
+    object-fit: fill;
 }
 
 .pipe.top {
     transform: rotate(180deg);
 }
 
-.pipe.bottom {
-    transform: none;
-}
-
-/* Score */
+/* SCORE */
 
 #score {
     position: absolute;
+
     top: 25px;
     left: 0;
+
     width: 100%;
+
     text-align: center;
+
     z-index: 50;
 
     font-size: 52px;
     font-weight: 900;
+
     color: white;
 
     text-shadow:
@@ -157,15 +171,19 @@ body {
     pointer-events: none;
 }
 
-/* Start / game over */
+/* OVERLAY */
 
 #overlay {
     position: absolute;
+
     inset: 0;
+
     z-index: 100;
 
     display: flex;
+
     flex-direction: column;
+
     align-items: center;
     justify-content: center;
 
@@ -177,6 +195,7 @@ body {
 
     font-size: 48px;
     font-weight: 900;
+
     color: white;
 
     text-shadow:
@@ -188,8 +207,10 @@ body {
     margin: 0 0 25px;
 
     color: white;
+
     font-size: 20px;
     font-weight: bold;
+
     text-align: center;
 
     text-shadow: 2px 2px 0 #555;
@@ -212,10 +233,13 @@ body {
         0 8px 15px rgba(0,0,0,0.25);
 
     cursor: pointer;
+
+    touch-action: manipulation;
 }
 
 #startButton:active {
     transform: translateY(4px);
+
     box-shadow:
         0 1px 0 #b49600,
         0 4px 8px rgba(0,0,0,0.25);
@@ -225,10 +249,11 @@ body {
     display: none !important;
 }
 
-/* Ground */
+/* GROUND */
 
 #ground {
     position: absolute;
+
     bottom: 0;
     left: 0;
 
@@ -247,6 +272,7 @@ body {
     border-top: 5px solid #6eaa31;
 
     z-index: 30;
+
     pointer-events: none;
 }
 </style>
@@ -262,18 +288,28 @@ body {
 
     <div id="score">0</div>
 
-    <img id="bird" src="./assets/bird.PNG" alt="Bird">
+    <img
+        id="bird"
+        src="./assets/bird.PNG"
+        alt="Bird"
+    >
 
     <div id="pipes"></div>
 
     <div id="ground"></div>
 
     <div id="overlay">
+
         <h1 id="title">FLAPPY</h1>
+
         <p id="message">
             Tap, click, or press SPACE to flap
         </p>
-        <button id="startButton">START</button>
+
+        <button id="startButton">
+            START
+        </button>
+
     </div>
 
 </div>
@@ -282,19 +318,23 @@ body {
 "use strict";
 
 /* =========================
-   GAME SETTINGS
+   SETTINGS
 ========================= */
 
 const GAME = {
+
     gravity: 0.42,
+
     flapStrength: -7.2,
 
     birdSize: 46,
 
     pipeWidth: 72,
+
     pipeGap: 155,
 
     pipeSpeed: 3.1,
+
     pipeSpacing: 220,
 
     groundHeight: 13
@@ -305,16 +345,29 @@ const GAME = {
    ELEMENTS
 ========================= */
 
-const game = document.getElementById("game");
-const bird = document.getElementById("bird");
-const pipesContainer = document.getElementById("pipes");
+const game =
+    document.getElementById("game");
 
-const scoreElement = document.getElementById("score");
+const bird =
+    document.getElementById("bird");
 
-const overlay = document.getElementById("overlay");
-const title = document.getElementById("title");
-const message = document.getElementById("message");
-const startButton = document.getElementById("startButton");
+const pipesContainer =
+    document.getElementById("pipes");
+
+const scoreElement =
+    document.getElementById("score");
+
+const overlay =
+    document.getElementById("overlay");
+
+const title =
+    document.getElementById("title");
+
+const message =
+    document.getElementById("message");
+
+const startButton =
+    document.getElementById("startButton");
 
 
 /* =========================
@@ -322,35 +375,49 @@ const startButton = document.getElementById("startButton");
 ========================= */
 
 let birdY = 0;
+
 let birdVelocity = 0;
+
 let birdRotation = 0;
 
 let pipes = [];
 
 let score = 0;
-let bestScore = Number(localStorage.getItem("flappyBest") || 0);
+
+let bestScore =
+    Number(
+        localStorage.getItem("flappyBest") || 0
+    );
 
 let running = false;
-let gameStarted = false;
+
+let animationFrame = 0;
 
 let lastTime = 0;
-let animationFrame;
 
 
 /* =========================
-   GAME SIZE
+   SIZE
 ========================= */
 
 function getGameWidth() {
+
     return game.clientWidth;
 }
 
+
 function getGameHeight() {
+
     return game.clientHeight;
 }
 
+
 function getGroundY() {
-    return getGameHeight() * (1 - GAME.groundHeight / 100);
+
+    return (
+        getGameHeight() *
+        (1 - GAME.groundHeight / 100)
+    );
 }
 
 
@@ -363,21 +430,30 @@ function resetGame() {
     cancelAnimationFrame(animationFrame);
 
     pipesContainer.innerHTML = "";
+
     pipes = [];
 
     score = 0;
+
     scoreElement.textContent = "0";
 
-    birdY = getGameHeight() * 0.45;
+    birdY =
+        getGameHeight() * 0.45;
+
     birdVelocity = 0;
+
     birdRotation = 0;
 
-    bird.style.left = `${getGameWidth() * 0.24}px`;
-    bird.style.top = `${birdY}px`;
-    bird.style.transform = "rotate(0deg)";
+    bird.style.left =
+        `${getGameWidth() * 0.24}px`;
+
+    bird.style.top =
+        `${birdY}px`;
+
+    bird.style.transform =
+        "rotate(0deg)";
 
     running = false;
-    gameStarted = false;
 
     lastTime = 0;
 }
@@ -394,13 +470,20 @@ function startGame() {
     overlay.classList.add("hidden");
 
     running = true;
-    gameStarted = true;
+
+    /*
+       THIS WAS MISSING BEFORE.
+       The first pipe now gets created.
+    */
+    createInitialPipes();
 
     flap();
 
-    lastTime = performance.now();
+    lastTime =
+        performance.now();
 
-    animationFrame = requestAnimationFrame(gameLoop);
+    animationFrame =
+        requestAnimationFrame(gameLoop);
 }
 
 
@@ -414,7 +497,8 @@ function flap() {
         return;
     }
 
-    birdVelocity = GAME.flapStrength;
+    birdVelocity =
+        GAME.flapStrength;
 }
 
 
@@ -424,74 +508,135 @@ function flap() {
 
 function createPipe(x) {
 
-    const gameHeight = getGameHeight();
-
     const ceiling = 55;
-    const floor = getGroundY() - 55;
 
-    const minimumGapTop = ceiling;
-    const maximumGapTop = floor - GAME.pipeGap;
+    const floor =
+        getGroundY() - 55;
+
+    const minimumGapTop =
+        ceiling;
+
+    const maximumGapTop =
+        floor - GAME.pipeGap;
 
     const gapTop =
         minimumGapTop +
         Math.random() *
-        Math.max(1, maximumGapTop - minimumGapTop);
+        Math.max(
+            1,
+            maximumGapTop -
+            minimumGapTop
+        );
 
-    const gapBottom = gapTop + GAME.pipeGap;
+    const gapBottom =
+        gapTop + GAME.pipeGap;
 
-    const topPipe = document.createElement("img");
-    topPipe.src = "./assets/pipe.PNG";
-    topPipe.className = "pipe top";
 
-    const bottomPipe = document.createElement("img");
-    bottomPipe.src = "./assets/pipe.PNG";
-    bottomPipe.className = "pipe bottom";
+    /* TOP PIPE */
 
-    topPipe.style.left = `${x}px`;
-    topPipe.style.top = `${gapTop - 450}px`;
+    const topPipe =
+        document.createElement("img");
 
-    bottomPipe.style.left = `${x}px`;
-    bottomPipe.style.top = `${gapBottom}px`;
+    topPipe.src =
+        "./assets/pipe.PNG";
+
+    topPipe.className =
+        "pipe top";
+
+
+    /* BOTTOM PIPE */
+
+    const bottomPipe =
+        document.createElement("img");
+
+    bottomPipe.src =
+        "./assets/pipe.PNG";
+
+    bottomPipe.className =
+        "pipe bottom";
+
 
     /*
-        The source pipe is 355x450.
+       Original pipe:
+       355 × 450
 
-        We keep the image's aspect ratio while
-        displaying it at 72px wide.
+       Display width:
+       72px
+
+       Matching proportional height:
     */
 
     const pipeHeight =
-        GAME.pipeWidth * (450 / 355);
+        GAME.pipeWidth *
+        (450 / 355);
 
-    topPipe.style.width = `${GAME.pipeWidth}px`;
-    topPipe.style.height = `${pipeHeight}px`;
 
-    bottomPipe.style.width = `${GAME.pipeWidth}px`;
-    bottomPipe.style.height = `${pipeHeight}px`;
+    topPipe.style.width =
+        `${GAME.pipeWidth}px`;
 
-    pipesContainer.appendChild(topPipe);
-    pipesContainer.appendChild(bottomPipe);
+    topPipe.style.height =
+        `${pipeHeight}px`;
+
+    bottomPipe.style.width =
+        `${GAME.pipeWidth}px`;
+
+    bottomPipe.style.height =
+        `${pipeHeight}px`;
+
+
+    topPipe.style.left =
+        `${x}px`;
+
+    bottomPipe.style.left =
+        `${x}px`;
+
+
+    /*
+       Position pipes around the gap.
+    */
+
+    topPipe.style.top =
+        `${gapTop - pipeHeight}px`;
+
+    bottomPipe.style.top =
+        `${gapBottom}px`;
+
+
+    pipesContainer.appendChild(
+        topPipe
+    );
+
+    pipesContainer.appendChild(
+        bottomPipe
+    );
+
 
     pipes.push({
-        x,
-        gapTop,
-        gapBottom,
+
+        x: x,
+
+        gapTop: gapTop,
+
+        gapBottom: gapBottom,
+
         topElement: topPipe,
+
         bottomElement: bottomPipe,
+
         scored: false
     });
 }
 
 
 /* =========================
-   INITIAL PIPE
+   FIRST PIPE
 ========================= */
 
 function createInitialPipes() {
 
-    const width = getGameWidth();
-
-    createPipe(width + 100);
+    createPipe(
+        getGameWidth() + 100
+    );
 }
 
 
@@ -501,44 +646,83 @@ function createInitialPipes() {
 
 function updatePipes(delta) {
 
-    const speedMultiplier = delta / 16.67;
+    const multiplier =
+        delta / 16.67;
 
-    for (let i = pipes.length - 1; i >= 0; i--) {
 
-        const pipe = pipes[i];
+    for (
+        let i = pipes.length - 1;
+        i >= 0;
+        i--
+    ) {
 
-        pipe.x -= GAME.pipeSpeed * speedMultiplier;
+        const pipe =
+            pipes[i];
 
-        pipe.topElement.style.left = `${pipe.x}px`;
-        pipe.bottomElement.style.left = `${pipe.x}px`;
+
+        pipe.x -=
+            GAME.pipeSpeed *
+            multiplier;
+
+
+        pipe.topElement.style.left =
+            `${pipe.x}px`;
+
+        pipe.bottomElement.style.left =
+            `${pipe.x}px`;
+
+
+        /* SCORE */
 
         if (
             !pipe.scored &&
-            pipe.x + GAME.pipeWidth < getGameWidth() * 0.24
+            pipe.x +
+            GAME.pipeWidth <
+            getGameWidth() * 0.24
         ) {
+
             pipe.scored = true;
 
             score++;
 
-            scoreElement.textContent = score;
+            scoreElement.textContent =
+                score;
         }
 
-        if (pipe.x + GAME.pipeWidth < -20) {
+
+        /* REMOVE */
+
+        if (
+            pipe.x +
+            GAME.pipeWidth <
+            -20
+        ) {
 
             pipe.topElement.remove();
+
             pipe.bottomElement.remove();
 
             pipes.splice(i, 1);
         }
     }
 
-    const lastPipe = pipes[pipes.length - 1];
+
+    /* CREATE NEXT PIPE */
+
+    const lastPipe =
+        pipes[pipes.length - 1];
+
 
     if (
         !lastPipe ||
-        lastPipe.x < getGameWidth() - GAME.pipeSpacing
+        lastPipe.x <
+        getGameWidth() -
+        GAME.pipeSpacing
     ) {
-        createPipe(getGameWidth() + 30);
+
+        createPipe(
+            getGameWidth() + 30
+        );
     }
 }
 
@@ -547,64 +731,84 @@ function updatePipes(delta) {
    COLLISION
 ========================= */
 
-function rectanglesOverlap(a, b) {
-
-    return (
-        a.left < b.right &&
-        a.right > b.left &&
-        a.top < b.bottom &&
-        a.bottom > b.top
-    );
-}
-
-
 function checkCollision() {
 
-    const birdLeft = getGameWidth() * 0.24;
-    const birdRight = birdLeft + GAME.birdSize;
+    const birdLeft =
+        getGameWidth() * 0.24;
 
-    const birdTop = birdY + 5;
-    const birdBottom = birdY + GAME.birdSize - 5;
+    const birdRight =
+        birdLeft +
+        GAME.birdSize;
 
-    const groundY = getGroundY();
+    const birdTop =
+        birdY + 5;
 
-    /* Ground */
+    const birdBottom =
+        birdY +
+        GAME.birdSize -
+        5;
 
-    if (birdBottom >= groundY) {
+
+    const groundY =
+        getGroundY();
+
+
+    /* GROUND */
+
+    if (
+        birdBottom >= groundY
+    ) {
+
         return true;
     }
 
-    /* Ceiling */
 
-    if (birdTop <= 0) {
+    /* CEILING */
+
+    if (
+        birdTop <= 0
+    ) {
+
         return true;
     }
 
-    /* Pipes */
 
-    for (const pipe of pipes) {
+    /* PIPES */
 
-        const pipeLeft = pipe.x;
-        const pipeRight = pipe.x + GAME.pipeWidth;
+    for (
+        const pipe of pipes
+    ) {
 
-        const topPipeBottom = pipe.gapTop;
-        const bottomPipeTop = pipe.gapBottom;
+        const pipeLeft =
+            pipe.x;
 
-        const horizontalOverlap =
+        const pipeRight =
+            pipe.x +
+            GAME.pipeWidth;
+
+
+        const horizontal =
             birdRight > pipeLeft &&
             birdLeft < pipeRight;
 
-        if (!horizontalOverlap) {
+
+        if (!horizontal) {
             continue;
         }
 
+
         if (
-            birdTop < topPipeBottom ||
-            birdBottom > bottomPipeTop
+            birdTop <
+            pipe.gapTop ||
+
+            birdBottom >
+            pipe.gapBottom
         ) {
+
             return true;
         }
     }
+
 
     return false;
 }
@@ -618,7 +822,11 @@ function gameOver() {
 
     running = false;
 
-    if (score > bestScore) {
+
+    if (
+        score >
+        bestScore
+    ) {
 
         bestScore = score;
 
@@ -628,16 +836,27 @@ function gameOver() {
         );
     }
 
-    title.textContent = "GAME OVER";
+
+    title.textContent =
+        "GAME OVER";
+
 
     message.innerHTML =
         `Score: ${score}<br>Best: ${bestScore}`;
 
-    startButton.textContent = "PLAY AGAIN";
 
-    overlay.classList.remove("hidden");
+    startButton.textContent =
+        "PLAY AGAIN";
 
-    cancelAnimationFrame(animationFrame);
+
+    overlay.classList.remove(
+        "hidden"
+    );
+
+
+    cancelAnimationFrame(
+        animationFrame
+    );
 }
 
 
@@ -651,53 +870,83 @@ function gameLoop(time) {
         return;
     }
 
+
     if (!lastTime) {
         lastTime = time;
     }
 
-    let delta = time - lastTime;
 
-    /*
-        Prevent huge physics jumps if the browser
-        pauses the tab or the phone locks.
-    */
-    delta = Math.min(delta, 35);
+    let delta =
+        time - lastTime;
+
+
+    delta =
+        Math.min(
+            delta,
+            35
+        );
+
 
     lastTime = time;
 
-    const multiplier = delta / 16.67;
 
-    /* Gravity */
+    const multiplier =
+        delta / 16.67;
 
-    birdVelocity += GAME.gravity * multiplier;
 
-    birdY += birdVelocity * multiplier;
+    /* GRAVITY */
 
-    /* Rotation */
+    birdVelocity +=
+        GAME.gravity *
+        multiplier;
 
-    birdRotation = Math.max(
-        -25,
-        Math.min(90, birdVelocity * 6)
-    );
 
-    bird.style.top = `${birdY}px`;
+    birdY +=
+        birdVelocity *
+        multiplier;
+
+
+    /* ROTATION */
+
+    birdRotation =
+        Math.max(
+            -25,
+            Math.min(
+                90,
+                birdVelocity * 6
+            )
+        );
+
+
+    bird.style.top =
+        `${birdY}px`;
+
 
     bird.style.transform =
         `rotate(${birdRotation}deg)`;
 
-    /* Pipes */
+
+    /* PIPES */
 
     updatePipes(delta);
 
-    /* Collision */
 
-    if (checkCollision()) {
+    /* COLLISION */
+
+    if (
+        checkCollision()
+    ) {
+
         gameOver();
+
         return;
     }
 
+
     animationFrame =
-        requestAnimationFrame(gameLoop);
+        requestAnimationFrame(
+            gameLoop
+        );
 }
 
 
@@ -711,53 +960,61 @@ function handleInput(event) {
         event.preventDefault();
     }
 
+
+    /*
+       If the game hasn't started,
+       start it.
+    */
+
     if (!running) {
 
-        if (!gameStarted) {
-            startGame();
-        }
+        startGame();
 
         return;
     }
+
 
     flap();
 }
 
 
 /* =========================
-   BUTTON
+   START BUTTON
 ========================= */
 
-startButton.addEventListener("click", function(event) {
+startButton.addEventListener(
+    "pointerdown",
+    function(event) {
 
-    event.stopPropagation();
+        event.preventDefault();
 
-    startGame();
-});
+        event.stopPropagation();
 
-
-/* =========================
-   TOUCH
-========================= */
-
-game.addEventListener(
-    "touchstart",
-    handleInput,
-    { passive: false }
+        startGame();
+    }
 );
 
 
 /* =========================
-   MOUSE
+   GAME TOUCH / MOUSE
 ========================= */
 
 game.addEventListener(
-    "mousedown",
+    "pointerdown",
     function(event) {
 
-        if (event.target === startButton) {
+        /*
+           Don't let clicking the button
+           trigger another flap/start.
+        */
+
+        if (
+            event.target ===
+            startButton
+        ) {
             return;
         }
+
 
         handleInput(event);
     }
@@ -795,7 +1052,9 @@ window.addEventListener(
 
         if (!running) {
 
-            birdY = getGameHeight() * 0.45;
+            birdY =
+                getGameHeight() *
+                0.45;
 
             bird.style.top =
                 `${birdY}px`;
@@ -805,7 +1064,22 @@ window.addEventListener(
 
 
 /* =========================
-   INITIAL STATE
+   IMAGE ERROR CHECK
+========================= */
+
+bird.addEventListener(
+    "error",
+    function() {
+
+        console.error(
+            "Could not load ./assets/bird.PNG"
+        );
+    }
+);
+
+
+/* =========================
+   INITIALIZE
 ========================= */
 
 resetGame();
@@ -813,4 +1087,9 @@ resetGame();
 message.textContent =
     "Tap, click, or press SPACE to flap";
 
-startButton.textContent = "START";
+startButton.textContent =
+    "START";
+</script>
+
+</body>
+</html>
