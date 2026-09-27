@@ -156,30 +156,60 @@ body {
 
 
 /* =========================
-   PIPES
+   PIPE SYSTEM
 ========================= */
 
-.pipe {
+.pipeGroup {
     position: absolute;
 
+    left: 0;
+    top: 0;
+
     width: 72px;
+    height: 100%;
 
     z-index: 10;
 
     pointer-events: none;
-
-    /*
-        Stretch the actual image so the
-        pipe reaches the edge of the screen.
-    */
-    object-fit: fill;
 }
 
-.pipe.top {
+
+/*
+    Every individual pipe image keeps
+    its natural proportions.
+
+    355px wide source images are displayed
+    at 72px wide.
+*/
+
+.pipePiece {
+    position: absolute;
+
+    left: 0;
+
+    width: 72px;
+
+    display: block;
+
+    pointer-events: none;
+}
+
+
+/*
+    Top pipe pieces are flipped so the
+    pipe opening faces downward.
+*/
+
+.pipeTop {
     transform: rotate(180deg);
 }
 
-.pipe.bottom {
+
+/*
+    Bottom pieces remain normal.
+*/
+
+.pipeBottom {
     transform: none;
 }
 
@@ -201,6 +231,7 @@ body {
     z-index: 50;
 
     font-size: 52px;
+
     font-weight: 900;
 
     color: white;
@@ -231,6 +262,7 @@ body {
     flex-direction: column;
 
     align-items: center;
+
     justify-content: center;
 
     background: rgba(0,0,0,0.18);
@@ -240,6 +272,7 @@ body {
     margin: 0 0 10px;
 
     font-size: 48px;
+
     font-weight: 900;
 
     color: white;
@@ -255,6 +288,7 @@ body {
     color: white;
 
     font-size: 20px;
+
     font-weight: bold;
 
     text-align: center;
@@ -367,7 +401,7 @@ body {
     <div id="ground"></div>
 
 
-    <!-- START / GAME OVER -->
+    <!-- START SCREEN -->
 
     <div id="overlay">
 
@@ -393,7 +427,7 @@ body {
 
 
 /* =========================
-   GAME SETTINGS
+   SETTINGS
 ========================= */
 
 const GAME = {
@@ -410,10 +444,48 @@ const GAME = {
 
     pipeSpeed: 3.1,
 
-    pipeSpacing: 220,
+    pipeSpacing: 240,
 
     groundHeight: 13
 };
+
+
+/*
+    Original image dimensions:
+
+    pipe.PNG:
+    355 × 450
+
+    pipehalf.PNG:
+    355 × 300
+*/
+
+const PIPE = {
+
+    mainWidth: 355,
+
+    mainHeight: 450,
+
+    halfWidth: 355,
+
+    halfHeight: 300,
+
+    displayWidth: GAME.pipeWidth
+};
+
+
+/*
+    Calculate displayed heights while
+    preserving the original aspect ratio.
+*/
+
+PIPE.mainDisplayHeight =
+    PIPE.displayWidth *
+    (PIPE.mainHeight / PIPE.mainWidth);
+
+PIPE.halfDisplayHeight =
+    PIPE.displayWidth *
+    (PIPE.halfHeight / PIPE.halfWidth);
 
 
 /* =========================
@@ -446,7 +518,7 @@ const startButton =
 
 
 /* =========================
-   GAME STATE
+   STATE
 ========================= */
 
 let birdY = 0;
@@ -497,7 +569,7 @@ function getGroundY() {
 
 
 /* =========================
-   RESET GAME
+   RESET
 ========================= */
 
 function resetGame() {
@@ -540,7 +612,7 @@ function resetGame() {
 
 
 /* =========================
-   START GAME
+   START
 ========================= */
 
 function startGame() {
@@ -555,14 +627,14 @@ function startGame() {
 
 
     /*
-        Create the first pipe.
+        Create first pipe.
     */
 
     createInitialPipes();
 
 
     /*
-        Give the bird its first flap.
+        Start bird.
     */
 
     flap();
@@ -595,20 +667,220 @@ function flap() {
 
 
 /* =========================
+   CREATE PIPE PIECE
+========================= */
+
+function createPipePiece(
+    group,
+    image,
+    top,
+    className
+) {
+
+    const piece =
+        document.createElement("img");
+
+    piece.src =
+        image;
+
+    piece.className =
+        `pipePiece ${className}`;
+
+    piece.style.top =
+        `${top}px`;
+
+    piece.style.width =
+        `${PIPE.displayWidth}px`;
+
+
+    /*
+        Main pipe:
+        355 × 450
+
+        Half pipe:
+        355 × 300
+    */
+
+    if (
+        image.includes("pipehalf")
+    ) {
+
+        piece.style.height =
+            `${PIPE.halfDisplayHeight}px`;
+
+    } else {
+
+        piece.style.height =
+            `${PIPE.mainDisplayHeight}px`;
+    }
+
+
+    group.appendChild(
+        piece
+    );
+
+
+    return piece;
+}
+
+
+/* =========================
+   BUILD TOP PIPE
+========================= */
+
+function buildTopPipe(
+    group,
+    gapTop
+) {
+
+    /*
+        The main pipe sits directly
+        against the bottom of the top
+        extension.
+
+        Then half pieces continue
+        upward until completely off-screen.
+    */
+
+    const mainHeight =
+        PIPE.mainDisplayHeight;
+
+    const halfHeight =
+        PIPE.halfDisplayHeight;
+
+
+    /*
+        Main pipe bottom touches gap.
+    */
+
+    let currentBottom =
+        gapTop;
+
+
+    /*
+        Main pipe.
+    */
+
+    const mainTop =
+        currentBottom -
+        mainHeight;
+
+
+    createPipePiece(
+        group,
+        "./assets/pipe.PNG",
+        mainTop,
+        "pipeTop"
+    );
+
+
+    currentBottom =
+        mainTop;
+
+
+    /*
+        Keep adding half pieces upward
+        until they cover the entire
+        area above the screen.
+    */
+
+    while (
+        currentBottom > -halfHeight
+    ) {
+
+        currentBottom -=
+            halfHeight;
+
+        createPipePiece(
+            group,
+            "./assets/pipehalf.PNG",
+            currentBottom,
+            "pipeTop"
+        );
+    }
+}
+
+
+/* =========================
+   BUILD BOTTOM PIPE
+========================= */
+
+function buildBottomPipe(
+    group,
+    gapBottom
+) {
+
+    const mainHeight =
+        PIPE.mainDisplayHeight;
+
+    const halfHeight =
+        PIPE.halfDisplayHeight;
+
+
+    /*
+        Main pipe begins at the gap.
+    */
+
+    let currentTop =
+        gapBottom;
+
+
+    createPipePiece(
+        group,
+        "./assets/pipe.PNG",
+        currentTop,
+        "pipeBottom"
+    );
+
+
+    currentTop +=
+        mainHeight;
+
+
+    /*
+        Keep adding half pieces downward
+        until they are completely past
+        the ground.
+    */
+
+    const groundY =
+        getGroundY();
+
+
+    while (
+        currentTop <
+        groundY + halfHeight
+    ) {
+
+        createPipePiece(
+            group,
+            "./assets/pipehalf.PNG",
+            currentTop,
+            "pipeBottom"
+        );
+
+
+        currentTop +=
+            halfHeight;
+    }
+}
+
+
+/* =========================
    CREATE PIPE
 ========================= */
 
 function createPipe(x) {
-
-    const ceiling = 0;
 
     const floor =
         getGroundY();
 
 
     /*
-        Keep the gap away from
-        the score and ground.
+        Gap location.
+
+        Keep enough room above and
+        below the gap for gameplay.
     */
 
     const minimumGapTop = 100;
@@ -635,74 +907,43 @@ function createPipe(x) {
 
 
     /*
-        TOP PIPE
+        One group controls both pipe
+        halves, making them move together.
     */
 
-    const topPipe =
-        document.createElement("img");
+    const group =
+        document.createElement("div");
 
-    topPipe.src =
-        "./assets/pipe.PNG";
-
-    topPipe.className =
-        "pipe top";
+    group.className =
+        "pipeGroup";
 
 
-    topPipe.style.left =
+    group.style.left =
         `${x}px`;
-
-    topPipe.style.top =
-        `${ceiling}px`;
-
-    topPipe.style.width =
-        `${GAME.pipeWidth}px`;
-
-    topPipe.style.height =
-        `${gapTop}px`;
 
 
     /*
-        BOTTOM PIPE
+        Build top and bottom.
     */
 
-    const bottomPipe =
-        document.createElement("img");
-
-    bottomPipe.src =
-        "./assets/pipe.PNG";
-
-    bottomPipe.className =
-        "pipe bottom";
-
-
-    bottomPipe.style.left =
-        `${x}px`;
-
-    bottomPipe.style.top =
-        `${gapBottom}px`;
-
-    bottomPipe.style.width =
-        `${GAME.pipeWidth}px`;
-
-    bottomPipe.style.height =
-        `${floor - gapBottom}px`;
-
-
-    /*
-        Add pipes to page.
-    */
-
-    pipesContainer.appendChild(
-        topPipe
+    buildTopPipe(
+        group,
+        gapTop
     );
 
+    buildBottomPipe(
+        group,
+        gapBottom
+    );
+
+
     pipesContainer.appendChild(
-        bottomPipe
+        group
     );
 
 
     /*
-        Store pipe information.
+        Store pipe collision information.
     */
 
     pipes.push({
@@ -713,9 +954,7 @@ function createPipe(x) {
 
         gapBottom: gapBottom,
 
-        topElement: topPipe,
-
-        bottomElement: bottomPipe,
+        element: group,
 
         scored: false
     });
@@ -754,24 +993,17 @@ function updatePipes(delta) {
             pipes[i];
 
 
-        /*
-            Move pipe.
-        */
-
         pipe.x -=
             GAME.pipeSpeed *
             multiplier;
 
 
-        pipe.topElement.style.left =
-            `${pipe.x}px`;
-
-        pipe.bottomElement.style.left =
+        pipe.element.style.left =
             `${pipe.x}px`;
 
 
         /*
-            Score.
+            SCORE
         */
 
         if (
@@ -793,25 +1025,27 @@ function updatePipes(delta) {
 
 
         /*
-            Remove old pipe.
+            REMOVE PIPE
         */
 
         if (
             pipe.x +
-            GAME.pipeWidth < -20
+            GAME.pipeWidth <
+            -50
         ) {
 
-            pipe.topElement.remove();
+            pipe.element.remove();
 
-            pipe.bottomElement.remove();
-
-            pipes.splice(i, 1);
+            pipes.splice(
+                i,
+                1
+            );
         }
     }
 
 
     /*
-        Create next pipe.
+        CREATE NEXT PIPE
     */
 
     const lastPipe =
@@ -886,6 +1120,10 @@ function checkCollision() {
 
     /*
         Pipes.
+
+        We only need to test the
+        horizontal pipe column and
+        the gap.
     */
 
     for (
@@ -909,6 +1147,11 @@ function checkCollision() {
             continue;
         }
 
+
+        /*
+            Bird is inside either
+            pipe section.
+        */
 
         if (
             birdTop <
@@ -994,8 +1237,8 @@ function gameLoop(time) {
 
 
     /*
-        Prevent huge jumps if the
-        browser pauses.
+        Prevent giant physics jumps
+        after a browser pause.
     */
 
     delta =
@@ -1036,6 +1279,7 @@ function gameLoop(time) {
 
             Math.min(
                 90,
+
                 birdVelocity * 6
             )
         );
@@ -1053,7 +1297,9 @@ function gameLoop(time) {
         PIPES
     */
 
-    updatePipes(delta);
+    updatePipes(
+        delta
+    );
 
 
     /*
@@ -1088,11 +1334,6 @@ function handleInput(event) {
     }
 
 
-    /*
-        If game isn't running,
-        start it.
-    */
-
     if (!running) {
 
         startGame();
@@ -1124,7 +1365,7 @@ startButton.addEventListener(
 
 
 /* =========================
-   GAME INPUT
+   TOUCH / MOUSE
 ========================= */
 
 game.addEventListener(
@@ -1132,19 +1373,18 @@ game.addEventListener(
 
     function(event) {
 
-        /*
-            Ignore the start button.
-        */
-
         if (
             event.target ===
             startButton
         ) {
+
             return;
         }
 
 
-        handleInput(event);
+        handleInput(
+            event
+        );
     }
 );
 
@@ -1166,7 +1406,9 @@ document.addEventListener(
 
             event.preventDefault();
 
-            handleInput(event);
+            handleInput(
+                event
+            );
         }
     }
 );
